@@ -249,6 +249,8 @@ function Projectile(x, y){
 
 
 // ************************************************************************ 
+// Main game loop.
+// *********************************************************************** 
 
 function draw(){
 	var i = 0;
@@ -267,8 +269,6 @@ function draw(){
 		context.drawImage(cannon, lifeX, 470);
 		lifeX += 40;
 	}
-
-
 
 	// ********************************************************************
 
@@ -290,8 +290,6 @@ function draw(){
 		projectiles[i].draw();
 	}
 
-
-
 }
 
 function displayMenu(){
@@ -303,8 +301,8 @@ function displayMenu(){
 
 	context.font="20px Georgia";
 	context.fillStyle="white";
+
 	context.fillText("Press [TAB} to start!",110,300);
-	// loadAssets();
 	window.addEventListener('keydown', handleInput, true);
 
 }
@@ -331,7 +329,7 @@ function tick(){
 	// randomly select invader to drop bomb
 
 	draw();
-	setTimeout(function(){tick();}, 30);
+	setTimeout(function(){tick();}, 5);
 	
 }
 

@@ -10,8 +10,9 @@ var projectiles = [];
 var bombs = [];
 var player;
 var switchFrame = false;
-var lives = 2;
-var score = 0;
+var lives;
+var score;
+var level;
 var moveState = 0; // 0: right, 1: left, 2: down
 
 
@@ -60,10 +61,8 @@ function init(){
 	displayMenu();
 	loadAssets();
 
-	// tick();
 }
 
-// var map = {39}
 function handleInput(e) {
 	if(e.keyCode == 39){
 		// alert("right");
@@ -74,13 +73,15 @@ function handleInput(e) {
 		player.moveLeft();
 	}
 
+	// space
 	if(e.keyCode == 32){
 		player.shoot();
 	}
 
+	// tab
 	if(e.keyCode == 9){
-		// loadAssets();
-		tick();
+		newGame();
+		
 	}
 }
 
@@ -111,12 +112,230 @@ function loadAssets(){
 
 	cannon.onload = function() {
 		player = new Cannon(180, 450);
-
-		// tick();
 	};
 
-	setFrame();
 	
+	
+}
+
+
+// ************************************************************************ 
+// Main game loop.
+// *********************************************************************** 
+
+function draw(){
+	var i = 0;
+	context.clearRect(0, 0, canvas.width, canvas.height);
+	context.fillStyle="black";
+	context.fillRect(0,0,400,500);
+
+	// HUD
+	var lifeX = 310;
+	context.font="15px Georgia";
+	context.fillStyle="white";
+	context.fillText("LIVES",250,485);	
+	context.fillText("SCORE:", 28,485);
+	context.fillText(score, 100,483);
+	for(i = 1; i < lives; i++){
+		context.drawImage(cannon, lifeX, 470);
+		lifeX += 40;
+	}
+
+	// ********************************************************************
+
+	player.draw();
+
+	for(i = 0; i < alien1Array.length; i++){
+		alien1Array[i].draw();
+	}
+
+	for(i = 0; i < alien2Array.length; i++){
+		alien2Array[i].draw();
+	}
+
+	for(i = 0; i < alien3Array.length; i++){
+		alien3Array[i].draw();
+	}
+
+	for(i = 0; i < projectiles.length; i++){
+		projectiles[i].draw();
+	}
+
+	for(i = 0; i < bombs.length; i++){
+		bombs[i].draw();
+	}
+
+}
+
+
+
+function displayMenu(){
+	context.clearRect(0, 0, canvas.width, canvas.height);
+	context.fillStyle="black";
+	context.fillRect(0,0,400,500);
+
+	context.drawImage(logo, 85, 80);
+
+	context.font="20px Georgia";
+	context.fillStyle="white";
+
+	context.fillText("Press [TAB] to start!",110,300);
+	window.addEventListener('keydown', handleInput, true);
+
+}
+
+
+var decisionTime = 0;
+
+function tick(){
+	var a1len, a2len, a3len;
+
+	a1len = alien1Array.length;
+	a2len = alien2Array.length;
+	a3len = alien3Array.length;
+
+	// randomly select invader to drop bomb
+	if(decisionTime > 30){
+		var decision = Math.floor((Math.random()*100) + 1);
+		var rowDecision = Math.floor((Math.random()*3)+1);  // random number between 1 and 3.
+		if(decision%3 == 0){
+			switch(rowDecision){
+				case 1:
+					alien1Array[Math.floor((Math.random()*(alien1Array.length - 1)) + 0)].shoot();
+					break;
+				case 2:
+					alien2Array[Math.floor((Math.random()*(alien2Array.length - 1)) + 0)].shoot();
+					break;
+				case 3:
+					alien3Array[Math.floor((Math.random()*(alien2Array.length - 1)) + 0)].shoot();
+					break;
+			}
+
+		}
+		decisionTime = 0;
+	}
+	
+	decisionTime++;
+
+	// Alien array movement
+	
+	var i,j;
+	switch(moveState){
+		case 0:
+			for(i = 0; i < alien1Array.length; i++){
+				alien1Array[i].moveRight();
+			}
+
+			for(i = 0; i < alien2Array.length; i++){
+				alien2Array[i].moveRight();
+			}
+
+			for(i = 0; i < alien3Array.length; i++){
+				alien3Array[i].moveRight();
+			}
+
+			// if(alien3Array[alien3Array.length - 1].x == 350){
+			// 	startMove = 1;
+			// }
+			break;
+		case 1:
+			for(i = 0; i < alien1Array.length; i++){
+				alien1Array[i].moveLeft();
+			}
+
+			for(i = 0; i < alien2Array.length; i++){
+				alien2Array[i].moveLeft();
+			}
+
+			for(i = 0; i < alien3Array.length; i++){
+				alien3Array[i].moveLeft();
+			}
+			// if(alien3Array[0].x <= 10){
+			// 	startMove = 0;
+			// }
+
+			break;
+		case 2:
+			for(i = 0; i < alien1Array.length; i++){
+				alien1Array[i].moveDown();
+			}
+
+			for(i = 0; i < alien2Array.length; i++){
+				alien2Array[i].moveDown();
+			}
+
+			for(i = 0; i < alien3Array.length; i++){
+				alien3Array[i].moveDown();
+			}
+
+			break;
+
+	}
+
+	draw();
+	
+}
+
+function newGame(){
+	lives = 3;
+	level = 0;
+	score = 0;
+	var i;
+
+	// empty these arrays
+	projectiles.length = 0;
+	bombs.length = 0;
+
+	// reinitialize all aliens to alive
+	for(i = 0; i < alien1Array.length; i++){
+		alien1Array[i].alive = true;
+	}
+	for(i = 0; i < alien2Array.length; i++){
+		alien2Array[i].alive = true;
+	}
+	for(i = 0; i < alien3Array.length; i++){
+		alien3Array[i].alive = true;
+	}
+
+	frameInterval = setInterval(setFrame, 200);
+	interval = setInterval(tick, 20);
+}
+
+function gameOver(){
+	context.clearRect(0, 0, canvas.width, canvas.height);
+	context.fillStyle="black";
+	context.fillRect(0,0,400,500);
+
+	context.font="20px Georgia";
+	context.fillStyle="white";
+
+	context.fillText("GAME OVER",130,250);
+
+}
+
+var startX = 0;
+function setFrame(){
+	switchFrame = !switchFrame;
+	// move aliens
+	startX++;
+	// console.log(startX);
+	if(startX >= 10){
+		moveState = 2;
+	} 
+
+	if(startX >= 11){
+		moveState = 1;
+	}
+
+	if(startX >= 21){
+		moveState = 2;
+	}
+
+	if(startX >= 22){
+		moveState = 0;
+		startX = 0;
+	}
+
 }
 
 
@@ -127,9 +346,11 @@ function loadAssets(){
 // Invader Class Object
 // *********************************************************************** 
 var invaderSpeed = 0.5;
+var invaderPop = 0;
+
 function Invader(type, x, y){
 	this.constructor.population++;
-	var alive=true;
+	this.alive=true;
 	this.type = type;
 	this.x = x;
 	this.y = y;
@@ -148,48 +369,53 @@ function Invader(type, x, y){
 
 	this.draw=function(){
 		// context.drawImage(this.type, this.x, this.y);
-		switch(this.type)
-		{
-			case alien1:
-				if(switchFrame){
-					context.drawImage(alien1, this.x, this.y);
-				} else {
-					context.drawImage(alien1_1, this.x , this.y);
-				}
-				break;
-			case alien2:
-				if(switchFrame){
-					context.drawImage(alien2, this.x, this.y);
-				} else {
-					context.drawImage(alien2_1, this.x , this.y);
-				}
-				break;
-			case alien3:
-				if(switchFrame){
-					context.drawImage(alien3, this.x, this.y);
-				} else {
-					context.drawImage(alien3_1, this.x , this.y);
-				}
-				break;
-			default:
-				break;
+		if(this.alive){
+			switch(this.type)
+			{
+				case alien1:
+					if(switchFrame){
+						context.drawImage(alien1, this.x, this.y);
+					} else {
+						context.drawImage(alien1_1, this.x , this.y);
+					}
+					break;
+				case alien2:
+					if(switchFrame){
+						context.drawImage(alien2, this.x, this.y);
+					} else {
+						context.drawImage(alien2_1, this.x , this.y);
+					}
+					break;
+				case alien3:
+					if(switchFrame){
+						context.drawImage(alien3, this.x, this.y);
+					} else {
+						context.drawImage(alien3_1, this.x , this.y);
+					}
+					break;
+				default:
+					break;
 
+			}
 		}
 		
 		
 	};
 
+	this.kill = function(){
+		this.alive = false;
+	}
+
 	this.shoot=function(){
-		bombs.push(new Bomb(this.x + 11, this.y+10));
-	};
-
-	this.testHit = function(x , y){
-
+		if(this.alive){
+			bombs.push(new Bomb(this.x + 11, this.y+10));
+		}
+		
 	};
 	
 }
 
-Invader.population = 0;
+// Invader.population = 0;
 
 // Invader.prototype.draw = function(context){
 // context.drawImage(this.type, this.x, this.y);
@@ -239,47 +465,61 @@ function Cannon(x, y){
 // *********************************************************************** 
 function Projectile(x, y){
 
-	var active = true;
+	this.active = true;
 	this.x = x;
 	this.y = y;
 
 	this.draw=function(){
-		context.drawImage(bullet, this.x, this.y-=5);
-		if(this.y < 0){
+		
+		if(this.active && this.y >= 0){
 			//deallocate self
+			context.drawImage(bullet, this.x, this.y-=5);
 		}
-		if(active){
+		if(this.active){
+
 			for(var i = 0; i < alien3Array.length; i++){
 			// alert("YOO");
-				if(( Math.abs(alien3Array[i].x - this.x) < 20) &&
-					(Math.abs(alien3Array[i].y - this.y) < 10)){
+				if(alien3Array[i].alive){
+					if(( Math.abs(alien3Array[i].x - this.x) < 20) &&
+						(Math.abs(alien3Array[i].y - this.y) < 10)){
 
-					alien3Array.splice(i, 1);
-					score += 100;
-					active = false;
+						// alien3Array.splice(i, 1);
+						alien3Array[i].kill();
+						score += 100;
+						this.active = false;
+					}
 				}
+				
 			}
 
 			for(i = 0; i < alien2Array.length; i++){
 				// alert("YOO");
-				if(( Math.abs(alien2Array[i].x - this.x) < 20) &&
-					(Math.abs(alien2Array[i].y - this.y) < 10)){
+				if(alien2Array[i].alive){
+					if(( Math.abs(alien2Array[i].x - this.x) < 20) &&
+						(Math.abs(alien2Array[i].y - this.y) < 10)){
 
-					alien2Array.splice(i, 1);
-					score += 200;
-					active = false;	
+						// alien2Array.splice(i, 1);
+						alien2Array[i].kill();
+						score += 200;
+						this.active = false;	
+					}
 				}
+				
 			}
 
 			for(i = 0; i < alien1Array.length; i++){
 				// alert("YOO");
-				if(( Math.abs(alien1Array[i].x - this.x) < 10) &&
-					(Math.abs(alien1Array[i].y - this.y) < 10)){
+				if(alien1Array[i].alive){
+					if(( Math.abs(alien1Array[i].x - this.x) < 10) &&
+						(Math.abs(alien1Array[i].y - this.y) < 10)){
 
-					alien1Array.splice(i, 1);
-					score += 100;
-					active = false;
+						// alien1Array.splice(i, 1);
+						alien1Array[i].kill();
+						score += 100;
+						this.active = false;
+					}
 				}
+				
 			}
 		}	
 	};
@@ -290,202 +530,34 @@ function Projectile(x, y){
 // *********************************************************************** 
 function Bomb(x, y){
 
-	var active = true;
+	this.active = true;
 	this.x = x;
 	this.y = y;
 
 	this.draw=function(){
-		context.drawImage(bomb, this.x, this.y += 5);
+
+		if(this.active && this.y <= 500){
+			context.drawImage(bomb, this.x, this.y += 3);
+		}
+
 		if(this.y > 0){
 			//deallocate self
 		}
-		if(active){
-			if( Math.abs(this.x - player.x) < 30){
+		if(this.active){
+			if( (Math.abs(this.x - player.x) < 10) && (Math.abs(this.y - player.y) < 10)){
 				lives--;
 				// restart game?
 				if(lives == 0){
 					// GAME OVER
+					clearInterval(interval);
+					clearInterval(frameInterval);
+					gameOver();
 				}
+				this.active = false;
 			}
 		}	
 	};
 }
-
-
-// ************************************************************************ 
-// Main game loop.
-// *********************************************************************** 
-
-function draw(){
-	var i = 0;
-	context.clearRect(0, 0, canvas.width, canvas.height);
-	context.fillStyle="black";
-	context.fillRect(0,0,400,500);
-
-	// HUD
-	var lifeX = 310;
-	context.font="15px Georgia";
-	context.fillStyle="white";
-	context.fillText("LIVES",250,485);	
-	context.fillText("SCORE:", 28,485);
-	context.fillText(score, 100,483);
-	for(i = 0; i < lives; i++){
-		context.drawImage(cannon, lifeX, 470);
-		lifeX += 40;
-	}
-
-	// ********************************************************************
-
-	player.draw();
-
-	for(i = 0; i < alien1Array.length; i++){
-		alien1Array[i].draw();
-	}
-
-	for(i = 0; i < alien2Array.length; i++){
-		alien2Array[i].draw();
-	}
-
-	for(i = 0; i < alien3Array.length; i++){
-		alien3Array[i].draw();
-	}
-
-	for(i = 0; i < projectiles.length; i++){
-		projectiles[i].draw();
-	}
-
-	for(i = 0; i < bombs.length; i++){
-		bombs[i].draw();
-	}
-
-}
-
-
-
-function displayMenu(){
-	context.clearRect(0, 0, canvas.width, canvas.height);
-	context.fillStyle="black";
-	context.fillRect(0,0,400,500);
-
-	context.drawImage(logo, 85, 80);
-
-	context.font="20px Georgia";
-	context.fillStyle="white";
-
-	context.fillText("Press [TAB] to start!",110,300);
-	window.addEventListener('keydown', handleInput, true);
-
-}
-
-
-function tick(){
-	// HUD 
-	var colDecision;
-	var rowDecision = Math.floor((Math.random()*3)+1);  // random number between 1 and 3.
-	switch(rowDecision){
-		case 1:
-			alien1Array[Math.floor((Math.random()*(alien1Array.length - 1)) + 0)].shoot();
-			break;
-		case 2:
-			alien2Array[Math.floor((Math.random()*(alien2Array.length - 1)) + 0)].shoot();
-			break;
-		case 3:
-			alien3Array[Math.floor((Math.random()*(alien2Array.length - 1)) + 0)].shoot();
-			break;
-	}
-
-
-	switch(moveState){
-		case 0:
-			for(var i = 0; i < alien1Array.length; i++){
-				alien1Array[i].moveRight();
-			}
-
-			for(i = 0; i < alien2Array.length; i++){
-				alien2Array[i].moveRight();
-			}
-
-			for(i = 0; i < alien3Array.length; i++){
-				alien3Array[i].moveRight();
-			}
-
-			// if(alien3Array[alien3Array.length - 1].x == 350){
-			// 	startMove = 1;
-			// }
-			break;
-		case 1:
-			for(var i = 0; i < alien1Array.length; i++){
-				alien1Array[i].moveLeft();
-			}
-
-			for(i = 0; i < alien2Array.length; i++){
-				alien2Array[i].moveLeft();
-			}
-
-			for(i = 0; i < alien3Array.length; i++){
-				alien3Array[i].moveLeft();
-			}
-			// if(alien3Array[0].x <= 10){
-			// 	startMove = 0;
-			// }
-
-			break;
-		case 2:
-			for(var i = 0; i < alien1Array.length; i++){
-				alien1Array[i].moveDown();
-			}
-
-			for(i = 0; i < alien2Array.length; i++){
-				alien2Array[i].moveDown();
-			}
-
-			for(i = 0; i < alien3Array.length; i++){
-				alien3Array[i].moveDown();
-			}
-
-			break;
-
-	}
-	
-	
-
-	// randomly select invader to drop bomb
-
-	draw();
-	setTimeout(function(){tick();}, 5);
-	
-}
-
-var startX = 0;
-function setFrame(){
-	switchFrame = !switchFrame;
-	// move aliens
-	startX++;
-	console.log(startX);
-	if(startX >= 10){
-		moveState = 2;
-	} 
-
-	if(startX >= 11){
-		moveState = 1;
-	}
-
-	if(startX >= 21){
-		moveState = 2;
-	}
-
-	if(startX >= 22){
-		moveState = 0;
-		startX = 0;
-	}
-
-
-
-	
-
-	setTimeout(function(){setFrame();}, 300);
-}
-
 
 
 

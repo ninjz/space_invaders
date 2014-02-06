@@ -1,5 +1,6 @@
 var canvas, context;
-var alien1, alien2, alien3, cannon, bullet, logo, bomb, death, alien1_1, alien2_1, alien3_1;
+var alien1, alien2, alien3, cannon, cannon_death, bullet, logo, bomb, 
+death, alien1_1, alien2_1, alien3_1, bunker_01, bunker_02, bunker_03, bunker_04, bunker_05;
 var invaderArray = [];
 var alien1Array = [];
 var alien2Array = [];
@@ -13,6 +14,7 @@ var lives;
 var score;
 var level;
 var moveState = 0; // 0: right, 1: left, 2: down
+
 
 
 // ************************************************************************ 
@@ -33,6 +35,8 @@ function init(){
 	bomb = document.getElementById("bomb");
 	death = document.getElementById("death");
 	cannon = document.getElementById("cannon");
+	cannon_death = document.getElementById("cannon_death");
+	bunker_01 = document.getElementById("bunker_01");
 
 	canvas = document.getElementById("spaceInvaders");
 	context = canvas.getContext("2d");
@@ -79,22 +83,26 @@ var alien3Y = 75;
 var alien3num = 8;
 
 function loadAssets(){
-	for(var i = 0; i < alien1num; i++){
+	var i;
+	for(i = 0; i < alien1num; i++){
 		alien1Array.push(new Invader(alien1, alien1X += 25, alien1Y));
 	}
 
 
-	for(var i = 0; i < alien2num; i++){
+	for(i = 0; i < alien2num; i++){
 		alien2Array.push(new Invader(alien2, alien2X += 30, alien2Y));
-		}
+	}
 
 
-	for(var i = 0; i < alien3num; i++){
+	for(i = 0; i < alien3num; i++){
 		alien3Array.push(new Invader(alien3, alien3X += 30, alien3Y));
 	}
 	
+	player = new Cannon(180, 440);
 
-	player = new Cannon(180, 450);
+	bunkers[0] = new Bunker(canvas.width/2 - 20, 390);
+	bunkers[1] = new Bunker(canvas.width/2 - 120, 390);
+	bunkers[2] = new Bunker(canvas.width/2 + 80, 390);
 
 }
 
@@ -145,6 +153,10 @@ function draw(){
 		bombs[i].draw();
 	}
 
+	for(i = 0; i < bunkers.length; i++){
+		bunkers[i].draw();
+	}
+
 }
 
 
@@ -180,6 +192,7 @@ function tick(){
 		var decision = Math.floor((Math.random()*100) + 1);
 		var rowDecision = Math.floor((Math.random()*3)+1);  // random number between 1 and 3.
 		if(decision%3 == 0){
+
 			switch(rowDecision){
 				case 1:
 					alien1Array[Math.floor((Math.random()*(alien1Array.length - 1)) + 0)].shoot();
@@ -278,7 +291,7 @@ function newGame(){
 		alien3Array[i].alive = true;
 	}
 
-	frameInterval = setInterval(setFrame, 200);
+	frameInterval = setInterval(setFrame, 400);
 	interval = setInterval(tick, 20);
 }
 
@@ -296,32 +309,61 @@ function setFrame(){
 	switchFrame = !switchFrame;
 	// move aliens
 	startX++;
-	// console.log(startX);
-	if(startX >= 10){
+	if(startX >= 20){
 		moveState = 2;
-	} 
-	if(startX >= 11){
+	}
+	if(startX >= 23){
 		moveState = 1;
 	}
-	if(startX >= 21){
+	if(startX >= 43){
 		moveState = 2;
 	}
 
-	if(startX >= 22){
+	if(startX >= 46){
 		moveState = 0;
 		startX = 0;
 	}
 
 }
 
+// ************************************************************************ 
+// Bunker Class Object
+// *********************************************************************** 
+var bunkers = [];
 
+function Bunker(x, y){
+	this.state = 1; // state 0 == destroyed
+	this.x = x;
+	this.y = y;
 
+	this.draw=function(){
+		switch(this.state){
+			case 1:
+				context.drawImage(bunker_01, this.x, this.y);
+				this.width = bunker_01.width;
+				this.height = bunker_01.height;
+				break;
+			case 2:
+				context.drawImage(bunker_02, this.x, this.y);
+				break;
+			case 3:
+				context.drawImage(bunker_03, this.x, this.y);
+				break;
+			case 4:
+				context.drawImage(bunker_04, this.x, this.y);
+				break;
+			case 5:
+				context.drawImage(bunker_05, this.x, this.y);
+				break;
+		}
+	};
+}
 
 
 // ************************************************************************ 
 // Invader Class Object
 // *********************************************************************** 
-var invaderSpeed = 0.5;
+var invaderSpeed = 0.2;
 var invaderPop = 0;
 
 function Invader(type, x, y){
@@ -381,7 +423,7 @@ function Invader(type, x, y){
 	this.kill = function(){
 		this.alive = false;
 		context.fillStyle="black";
-		context.fillRect(this.x,this.y,30,50);
+		context.fillRect(this.x,this.y,this.width,this.height);
 		context.drawImage(death, this.x - 3, this.y);
 
 	};
@@ -408,7 +450,7 @@ function Invader(type, x, y){
 // *********************************************************************** 
 function Cannon(x, y){
 
-	var alive=true;
+	this.alive = true;
 	this.x = x;
 	this.y = y;
 	this.width = cannon.width;
@@ -432,13 +474,26 @@ function Cannon(x, y){
 		projectiles.push(new Projectile(this.x + 11, this.y-10));
 	};
 
+	this.kill=function(){
+		context.fillStyle="black";
+		context.fillRect(this.x,this.y,this.width, this.height);
+		context.drawImage(cannon_death, this.x, this.y);
+	};
+
 	this.draw=function(){
-		context.drawImage(cannon, this.x, this.y);
+		if(this.alive){
+			context.drawImage(cannon, this.x, this.y);
+		}
+		
 
 	};
 
 }
 
+
+function flashDraw(thing){
+
+}
 
 // ************************************************************************ 
 
@@ -463,10 +518,7 @@ function Projectile(x, y){
 
 			for(var i = 0; i < alien3Array.length; i++){
 				if(alien3Array[i].alive){
-					if(( Math.abs(alien3Array[i].x - this.x) < 20) &&
-						(Math.abs(alien3Array[i].y - this.y) < 10)){
-
-						// alien3Array.splice(i, 1);
+					if(testHit(alien3Array[i], this)){
 						alien3Array[i].kill();
 						score += 100;
 						this.active = false;
@@ -477,10 +529,7 @@ function Projectile(x, y){
 
 			for(i = 0; i < alien2Array.length; i++){
 				if(alien2Array[i].alive){
-					if(( Math.abs(alien2Array[i].x - this.x) < 20) &&
-						(Math.abs(alien2Array[i].y - this.y) < 10)){
-
-						// alien2Array.splice(i, 1);
+					if(testHit(alien2Array[i], this)){
 						alien2Array[i].kill();
 						score += 100;
 						this.active = false;	
@@ -490,10 +539,7 @@ function Projectile(x, y){
 
 			for(i = 0; i < alien1Array.length; i++){
 				if(alien1Array[i].alive){
-					if(( Math.abs(alien1Array[i].x - this.x) < 10) &&
-						(Math.abs(alien1Array[i].y - this.y) < 10)){
-
-						// alien1Array.splice(i, 1);
+					if(testHit(alien1Array[i], this)){
 						alien1Array[i].kill();
 						score += 100;
 						this.active = false;
@@ -503,6 +549,17 @@ function Projectile(x, y){
 			}
 		}	
 	};
+}
+
+// ************************************************************************ 
+// Tests if two entities collide with each other.
+// both entities must have x,y,width,height defined.
+// *********************************************************************** 
+function testHit(a, b){
+	return !(a.x + a.width < b.x ||
+           b.x + b.width < a.x ||
+           a.y + b.height < b.y ||
+           b.y + b.height < a.y);
 }
 
 // ************************************************************************ 
@@ -523,7 +580,8 @@ function Bomb(x, y){
 		}
 
 		if(this.active){
-			if( (Math.abs(this.x - player.x) < 10) && (Math.abs(this.y - player.y) < 10)){
+			if(testHit(player, this)){
+				player.kill();
 				lives--;
 				// restart game?
 				if(lives == 0){
@@ -534,6 +592,15 @@ function Bomb(x, y){
 				}
 				this.active = false;
 			}
+			for(var i = 0; i < bunkers.length; i++){
+				if(testHit(bunkers[i], this)){
+					this.active = false;
+					context.fillStyle="black";
+					context.fillRect(this.x,this.y,this.width,this.height);
+					context.drawImage(death, this.x-10, this.y);
+				}
+			}
+			
 		}	
 	};
 }

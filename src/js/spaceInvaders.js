@@ -1,13 +1,12 @@
 var canvas, context;
-var alien1, alien2, alien3, cannon, bullet, logo, bomb;
-var alien1_1, alien2_1, alien3_1;
-var images = [];
+var alien1, alien2, alien3, cannon, bullet, logo, bomb, death, alien1_1, alien2_1, alien3_1;
 var invaderArray = [];
 var alien1Array = [];
 var alien2Array = [];
 var alien3Array = [];
 var projectiles = [];
 var bombs = [];
+
 var player;
 var switchFrame = false;
 var lives;
@@ -23,35 +22,17 @@ var moveState = 0; // 0: right, 1: left, 2: down
 
 function init(){
 	
-	alien1 = new Image();
-	alien1_1 = new Image();
-
-	alien2 = new Image();
-	alien2_1 = new Image();
-
-	alien3 = new Image();
-	alien3_1 = new Image();
-	bullet = new Image();
-	logo = new Image();
-	bomb = new Image();
-
-	cannon = new Image();
-	
-
-	alien1.src = "alien01_01.png";
-	alien1_1.src = "alien01_02.png";
-	alien2_1.src = "alien02_02.png";
-	alien3_1.src = "alien03_02.png";
-
-	alien2.src = "alien02_01.png";
-	alien3.src = "alien03_01.png";
-	bullet.src = "bullet.png";
-
-	logo.src = "logo.png";
-	bomb.src = "alien_bomb.png";
-	cannon.src = "cannon.png";
-	
-	images = [alien1,alien2,alien3, alien1_1, alien2_1, alien3_1, cannon, bullet, logo];
+	alien1 = document.getElementById("alien1");
+	alien1_1 = document.getElementById("alien1_1");
+	alien2 = document.getElementById("alien2");
+	alien2_1 = document.getElementById("alien2_1");
+	alien3 = document.getElementById("alien3");
+	alien3_1 = document.getElementById("alien3_1");
+	bullet = document.getElementById("bullet");
+	logo = document.getElementById("logo");
+	bomb = document.getElementById("bomb");
+	death = document.getElementById("death");
+	cannon = document.getElementById("cannon");
 
 	canvas = document.getElementById("spaceInvaders");
 	context = canvas.getContext("2d");
@@ -85,37 +66,36 @@ function handleInput(e) {
 	}
 }
 
+var alien1X = 60;
+var alien1Y = 20;
+var alien1num = 9;
+
+var alien2X = 50;
+var alien2Y = 45;
+var alien2num = 8;
+
+var alien3X = 50;
+var alien3Y = 75;
+var alien3num = 8;
+
 function loadAssets(){
-	alien1.onload = function() {
-		var startX = 60;
-		for(var i = 0; i < 9; i++){
-			alien1Array.push(new Invader(alien1, startX += 25, 20));
+	for(var i = 0; i < alien1num; i++){
+		alien1Array.push(new Invader(alien1, alien1X += 25, alien1Y));
+	}
+
+
+	for(var i = 0; i < alien2num; i++){
+		alien2Array.push(new Invader(alien2, alien2X += 30, alien2Y));
 		}
 
-		// alien1Array.push(new Invader(alien1, 24, 20));
-	};
 
-	alien2.onload = function() {
-		var startX = 50;
-		for(var i = 0; i < 8; i++){
-			alien2Array.push(new Invader(alien2, startX += 30, 45));
-		}
-	};
-
-	alien3.onload = function() {
-		var startX = 50;
-		for(var i = 0; i < 8; i++){
-			alien3Array.push(new Invader(alien3, startX += 30, 75));
-		}
-	};
-
-
-	cannon.onload = function() {
-		player = new Cannon(180, 450);
-	};
-
+	for(var i = 0; i < alien3num; i++){
+		alien3Array.push(new Invader(alien3, alien3X += 30, alien3Y));
+	}
 	
-	
+
+	player = new Cannon(180, 450);
+
 }
 
 
@@ -185,7 +165,8 @@ function displayMenu(){
 }
 
 
-var decisionTime = 0;
+var decisionTime = 30;
+var time = 0;
 
 function tick(){
 	var a1len, a2len, a3len;
@@ -195,7 +176,7 @@ function tick(){
 	a3len = alien3Array.length;
 
 	// randomly select invader to drop bomb
-	if(decisionTime > 30){
+	if(time > decisionTime){
 		var decision = Math.floor((Math.random()*100) + 1);
 		var rowDecision = Math.floor((Math.random()*3)+1);  // random number between 1 and 3.
 		if(decision%3 == 0){
@@ -212,10 +193,10 @@ function tick(){
 			}
 
 		}
-		decisionTime = 0;
+		time = 0;
 	}
 	
-	decisionTime++;
+	time++;
 
 	// Alien array movement
 	
@@ -302,9 +283,6 @@ function newGame(){
 }
 
 function gameOver(){
-	context.clearRect(0, 0, canvas.width, canvas.height);
-	context.fillStyle="black";
-	context.fillRect(0,0,400,500);
 
 	context.font="20px Georgia";
 	context.fillStyle="white";
@@ -322,11 +300,9 @@ function setFrame(){
 	if(startX >= 10){
 		moveState = 2;
 	} 
-
 	if(startX >= 11){
 		moveState = 1;
 	}
-
 	if(startX >= 21){
 		moveState = 2;
 	}
@@ -354,6 +330,8 @@ function Invader(type, x, y){
 	this.type = type;
 	this.x = x;
 	this.y = y;
+	this.width = type.width;
+	this.height = type.height;
 
 	this.moveDown=function(){
 		this.y += invaderSpeed;
@@ -398,13 +376,15 @@ function Invader(type, x, y){
 
 			}
 		}
-		
-		
 	};
 
 	this.kill = function(){
 		this.alive = false;
-	}
+		context.fillStyle="black";
+		context.fillRect(this.x,this.y,30,50);
+		context.drawImage(death, this.x - 3, this.y);
+
+	};
 
 	this.shoot=function(){
 		if(this.alive){
@@ -431,6 +411,8 @@ function Cannon(x, y){
 	var alive=true;
 	this.x = x;
 	this.y = y;
+	this.width = cannon.width;
+	this.height = cannon.height;
 
 	this.moveLeft=function(){
 		this.x -= 5;
@@ -468,6 +450,8 @@ function Projectile(x, y){
 	this.active = true;
 	this.x = x;
 	this.y = y;
+	this.width = bullet.width;
+	this.height = bullet.height;
 
 	this.draw=function(){
 		
@@ -478,7 +462,6 @@ function Projectile(x, y){
 		if(this.active){
 
 			for(var i = 0; i < alien3Array.length; i++){
-			// alert("YOO");
 				if(alien3Array[i].alive){
 					if(( Math.abs(alien3Array[i].x - this.x) < 20) &&
 						(Math.abs(alien3Array[i].y - this.y) < 10)){
@@ -493,22 +476,19 @@ function Projectile(x, y){
 			}
 
 			for(i = 0; i < alien2Array.length; i++){
-				// alert("YOO");
 				if(alien2Array[i].alive){
 					if(( Math.abs(alien2Array[i].x - this.x) < 20) &&
 						(Math.abs(alien2Array[i].y - this.y) < 10)){
 
 						// alien2Array.splice(i, 1);
 						alien2Array[i].kill();
-						score += 200;
+						score += 100;
 						this.active = false;	
 					}
 				}
-				
 			}
 
 			for(i = 0; i < alien1Array.length; i++){
-				// alert("YOO");
 				if(alien1Array[i].alive){
 					if(( Math.abs(alien1Array[i].x - this.x) < 10) &&
 						(Math.abs(alien1Array[i].y - this.y) < 10)){
@@ -533,6 +513,8 @@ function Bomb(x, y){
 	this.active = true;
 	this.x = x;
 	this.y = y;
+	this.width = bomb.width;
+	this.height = bomb.height;
 
 	this.draw=function(){
 
@@ -540,9 +522,6 @@ function Bomb(x, y){
 			context.drawImage(bomb, this.x, this.y += 3);
 		}
 
-		if(this.y > 0){
-			//deallocate self
-		}
 		if(this.active){
 			if( (Math.abs(this.x - player.x) < 10) && (Math.abs(this.y - player.y) < 10)){
 				lives--;

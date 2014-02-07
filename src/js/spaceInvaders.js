@@ -1,12 +1,15 @@
 var canvas, context;
 var alien1, alien2, alien3, cannon, cannon_death, bullet, logo, bomb, 
 death, alien1_1, alien2_1, alien3_1, bunker_01, bunker_02, bunker_03, bunker_04, bunker_05;
-var invaderArray = [];
+var invaderArray = []; // contains 2d array of aliens
+
 var alien1Array = [];
 var alien2Array = [];
 var alien2Array_1 = [];
 var alien3Array = [];
 var alien3Array_1 = [];
+
+
 var projectiles = [];
 var bombs = [];
 
@@ -40,9 +43,6 @@ function Marker(x,y){
 		this.y += invaderSpeed;
 	};
 
-	// this.draw = function(){
-	// 	context.drawImage(cannon, this.x, this.y);
-	// };
 }
 
 // ************************************************************************ 
@@ -76,6 +76,9 @@ function init(){
 
 }
 
+var canShoot = true;
+var delay = 800;
+
 function handleInput(e) {
 	if(e.keyCode == 39){
 		// alert("right");
@@ -92,27 +95,15 @@ function handleInput(e) {
 			gameStarted = true;
 			newGame();
 		} else {
-			// clearInterval(interval);
-			// clearInterval(frameInterval);
-			// newGame();
-			player.shoot();
+			if(canShoot){
+				player.shoot();
+				canShoot = false;
+				setTimeout(function(){canShoot = true;}, delay);
+			}
 		}
-		
-	}
-
-	// tab
-	if(e.keyCode == 9){
-		// if(!gameStarted){
-		// 	gameStarted = true;
-		// 	newGame();
-		// } else {
-		// 	clearInterval(interval);
-		// 	clearInterval(frameInterval);
-		// 	newGame();
-		// }
-		
 	}
 }
+
 
 
 var invaderPop;
@@ -155,6 +146,8 @@ function loadAssets(){
 	for(i = 0; i < alien3num; i++){
 		alien3Array_1.push(new Invader(alien3, alien3X_1 += 30, alien3Y_1));
 	}
+
+	invaderArray = [alien1Array, alien2Array, alien2Array_1, alien3Array, alien3Array_1];
 	
 	invaderPop = (alien1Array.length + alien2Array_1.length + alien2Array.length + alien3Array.length + alien3Array_1.length);
 
@@ -200,15 +193,11 @@ function draw(){
 		bunkers[i].draw();
 	}
 
-	
-
 	for(i = 0; i < bunkers.length; i++){
 		for(var j = 0; j < bunkers[i].sections.length; j++){
 			bunkers[i].sections[j].draw();
 		}
 	}
-
-	
 
 	for(i = 0; i < projectiles.length; i++){
 		projectiles[i].draw();
@@ -279,33 +268,39 @@ function displayMenu(){
 var lastY, prevState;
 
 function tick(){
-	var a1len, a2len, a3len;
+	var notEmpty = [];
+	var temp = 0;
 
-	a1len = alien1Array.length;
-	a2len = alien2Array.length;
-	a3len = alien3Array.length;
+	for(var aliens in invaderArray){
+		if(aliens.length > 0){
+			notEmpty.push(temp);
+			temp++;
+		}
+	}
+
+
 
 	// randomly select invader to drop bomb
 	if(time > decisionTime){
-		var decision = Math.floor((Math.random()*100) + 1);
-		var rowDecision = Math.floor((Math.random()*5)+1);  // random number between 1 and 3.
+		var decision = Math.floor((Math.random()* choices) + 1);
+		var rowDecision = Math.floor((Math.random()* notEmpty.length)+1);  // random number between 1 and lenght of temp.
 		if(decision%2 == 0){
 
 			switch(rowDecision){
 				case 1:
-					alien1Array[Math.floor((Math.random()*(alien1Array.length - 1)) + 0)].shoot();
+					invaderArray[notEmpty[0]][Math.floor((Math.random()*(invaderArray[notEmpty[0]].length - 1)) + 0)].shoot();
 					break;
 				case 2:
-					alien2Array[Math.floor((Math.random()*(alien2Array.length - 1)) + 0)].shoot();
+					invaderArray[notEmpty[1]][Math.floor((Math.random()*(invaderArray[notEmpty[1]].length - 1)) + 0)].shoot();
 					break;
 				case 3:
-					alien3Array[Math.floor((Math.random()*(alien2Array.length - 1)) + 0)].shoot();
+					invaderArray[notEmpty[2]][Math.floor((Math.random()*(invaderArray[notEmpty[2]].length - 1)) + 0)].shoot();
 					break;
 				case 4:
-					alien2Array_1[Math.floor((Math.random()*(alien2Array_1.length - 1)) + 0)].shoot();
+					invaderArray[notEmpty[3]][Math.floor((Math.random()*(invaderArray[notEmpty[3]].length - 1)) + 0)].shoot();
 					break;
 				case 5:
-					alien3Array_1[Math.floor((Math.random()*(alien3Array_1.length - 1)) + 0)].shoot();
+					invaderArray[notEmpty[4]][Math.floor((Math.random()*(invaderArray[notEmpty[4]].length - 1)) + 0)].shoot();
 					break;
 			}
 
@@ -428,61 +423,12 @@ function tick(){
 		nextLevel();
 	}
 
-
-		
-
-	for(i = 0; i < bombs.length; i++){
-		if(testHit(player, bombs[i])){
-			player.alive = false;
-			lives--;
-			// restart game?
-			if(lives == 0){
-				// GAME OVER
-				gameOverState = true;
-			}
-			bombs[i].active = false;
-		}
-		if(bombs[i].active){
-			for(var k = 0; k < bunkers.length; k++){
-				for(var j = 0; j < bunkers[k].numSections; j++){
-
-
-					if(!bunkers[k].sections[j].destroyed){
-						if(testHit(bunkers[k].sections[j], bombs[i])){
-
-								bombs[i].hitBunker = true;
-								bunkers[k].sections[j].y += bombs[i].height;
-
-								bunkers[k].sections[j].lives--;
-								bunkers[k].sections[j].timesHitTop++;
-
-						 		if(bunkers[k].sections[j].lives == 0){
-						 			console.log("destroyed");
-									bunkers[k].sections[j].destroy();
-								}
-								bombs[i].active = false;
-					 	}
-							
-					}
-				}
-					
-			}
-			
-		} 
-		
-		if(bombs[i].y >= canvas.height){
-			bombs[i].active = false;
-		}
-		
-
-	}
-
-
 	draw();
 	
 }
 
 var decisionTime;
+var choices;
 var time;
 var invaderSpeed;
 var speedIncrease;
@@ -491,6 +437,7 @@ function newGame(){
 	gameOverState = false;
 	player.alive = true;
 
+	delay = 800;
 	speedIncrease = 0;
 	invaderSpeed = 0.2;
 	moveState = 0;
@@ -499,6 +446,7 @@ function newGame(){
 	score = 0;
 	time = 0;
 	decisionTime = 50;
+	choices = 95;
 
 	// empty these arrays
 	projectiles.length = 0;
@@ -509,6 +457,7 @@ function newGame(){
 	alien2Array_1.length = 0;
 	alien3Array.length = 0;
 	alien3Array_1.length = 0;
+	invaderArray.length = 0;
 	bunkers.length = 0;
 
 	loadAssets();
@@ -520,13 +469,24 @@ function newGame(){
 function nextLevel(){
 	time = 0;
 	decisionTime -= 1;
+	choices -= 3;
 	invaderSpeed += 0.1;
 	moveState = 0;
 	speedIncrease = 0;
+	delay -= 100;
+
+	if(delay <= 0){
+		delay = 0;
+	}
 
 	if(decisionTime == 0){
 		decisionTime = 0;
 	}
+
+	if(choices <= 0 ){
+		choices = 0;
+	}
+
 
 	// empty these arrays
 	projectiles.length = 0;
@@ -537,6 +497,7 @@ function nextLevel(){
 	alien2Array_1.length = 0;
 	alien3Array.length = 0;
 	alien3Array_1.length = 0;
+	invaderArray.length = 0;
 
 	loadAssets();
 
@@ -546,6 +507,7 @@ function nextLevel(){
 }
 
 function gameOver(){
+	gameStarted = false;
 
 	context.font="23px monospace";
 	context.fillStyle="white";
@@ -772,10 +734,6 @@ function Cannon(x, y){
 }
 
 
-function flashDraw(thing){
-
-}
-
 // ************************************************************************ 
 
 // ************************************************************************ 
@@ -899,14 +857,53 @@ function Bomb(x, y){
 
 	this.draw=function(){
 
-		if(this.active && this.y <= 500){
+		if(this.y <= 500){
 			context.drawImage(bomb, this.x, this.y += 3);
 		}
+
+		if(testHit(player, this)){
+			player.alive = false;
+			lives--;
+			// restart game?
+			if(lives == 0){
+				// GAME OVER
+				gameOverState = true;
+			}
+			this.active = false;
+		}
+
+		for(var k = 0; k < bunkers.length; k++){
+			for(var j = 0; j < bunkers[k].numSections; j++){
+
+
+				if(!bunkers[k].sections[j].destroyed){
+					if(testHit(bunkers[k].sections[j], this)){
+
+							this.hitBunker = true;
+							bunkers[k].sections[j].y += this.height;
+
+							bunkers[k].sections[j].lives--;
+							bunkers[k].sections[j].timesHitTop++;
+
+					 		if(bunkers[k].sections[j].lives == 0){
+					 			console.log("destroyed");
+								bunkers[k].sections[j].destroy();
+							}
+							this.active = false;
+				 	}
+						
+				}
+			}
+				
+		}
 			
-		if(this.hitBunker){
-			context.fillStyle="black";
-			context.fillRect(this.x,this.y + bomb.height - 3 ,this.width,this.height);
-		}	
+			
+		if(this.y >= canvas.height){
+			this.active = false;
+		}
+			
+
+		
 	};
 }
 

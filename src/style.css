@@ -19,7 +19,11 @@ canvas {
 }
 
 body{
-	background-color: green;
+	/*background-color: green;*/
+	background: url("planet-earth-in-space.jpg") no-repeat bottom left;
+    background-size: 100% 100%;
+    min-height:100%;
+    background-attachment:  fixed;
 }
 
 footer{

@@ -117,7 +117,7 @@ function loadAssets(){
 	}
 	
 
-	player = new Cannon(180, 440);
+	player = new Cannon(canvas.width/2 - cannon.width/2, 440);
 
 	bunkers[0] = new Bunker(canvas.width/2 - 20, 390);
 	bunkers[1] = new Bunker(canvas.width/2 - 120, 390);
@@ -150,6 +150,8 @@ function draw(){
 
 	// ********************************************************************
 
+	
+
 	for(i = 0; i < bunkers.length; i++){
 		bunkers[i].draw();
 	}
@@ -160,6 +162,10 @@ function draw(){
 		for(var j = 0; j < bunkers[i].sections.length; j++){
 			bunkers[i].sections[j].draw();
 		}
+	}
+
+	for(i = 0; i < projectiles.length; i++){
+		projectiles[i].draw();
 	}
 
 	for(i = 0; i < bombs.length; i++){
@@ -199,9 +205,7 @@ function draw(){
 
 	
 
-	for(i = 0; i < projectiles.length; i++){
-		projectiles[i].draw();
-	}
+	
 
 	
 
@@ -356,9 +360,10 @@ function tick(){
 								bombs[i].hitBunker = true;
 								bunkers[k].sections[j].y += bombs[i].height;
 
-								bunkers[k].sections[j].timesHit += 1;
+								bunkers[k].sections[j].lives--;
+								bunkers[k].sections[j].timesHitTop++;
 
-						 		if(bunkers[k].sections[j].timesHit == 3){
+						 		if(bunkers[k].sections[j].lives == 0){
 						 			console.log("destroyed");
 									bunkers[k].sections[j].destroy();
 								}
@@ -398,7 +403,9 @@ function newGame(){
 
 	alien1Array.length = 0;
 	alien2Array.length = 0;
+	alien2Array_1.length = 0;
 	alien3Array.length = 0;
+	alien3Array_1.length = 0;
 	bunkers.length = 0;
 
 	loadAssets();
@@ -453,7 +460,12 @@ function Bunker(x, y){
 	// setup sections
 	this.numSections = bunker_01.width/(bomb.width - 4) ;
 	for(var i = 0; i < this.numSections; i++){
-		this.sections[i] = new BunkerSection(this.x + (i*(bomb.width - 4)), this.y);
+		if((i > (this.numSections/3)) && (i < (this.numSections - (this.numSections/3) - 1))){
+			this.sections[i] = new BunkerSection(this.x + (i*(bomb.width - 4)), this.y, 2);
+		} else {
+			this.sections[i] = new BunkerSection(this.x + (i*(bomb.width - 4)), this.y, 3);
+		}
+		
 	}
 
 	this.draw=function(){
@@ -479,7 +491,7 @@ function Bunker(x, y){
 	};
 }
 
-function BunkerSection(x, y){
+function BunkerSection(x, y, lives){
 	this.destroyed = false;
 	this.startY = y;
 	this.startX = x;
@@ -487,12 +499,27 @@ function BunkerSection(x, y){
 	this.y = y;
 	this.width = bomb.width;
 	this.height = bunker_01.height;
-	this.timesHit = 0;
+	this.origLife = lives;
+	this.lives = lives;
+	this.timesHitTop = 0;
+	this.timesHitBottom = 0;
 
 	this.draw = function(){
 		context.fillStyle="black";
-		context.fillRect(this.startX,this.startY, bomb.width - 4, (this.timesHit*bomb.height));
-	}
+		context.fillRect(this.startX,this.startY, bomb.width - 4, (this.timesHitTop*bomb.height) + 1);
+		if(this.origLife == 2 && this.lives == 0){
+			context.fillRect(this.startX, 
+					((this.startY + bunker_01.height) - (this.timesHitBottom * bomb.height) - 10), 
+					bomb.width - 4, 
+					(this.timesHitBottom*bomb.height) + 2);
+		} else {
+			context.fillRect(this.startX, 
+					((this.startY + bunker_01.height) - (this.timesHitBottom * bomb.height) + 2), 
+					bomb.width - 4, 
+					(this.timesHitBottom*bomb.height) + 2);
+		}
+		
+	};
 
 	this.destroy = function(){
 		this.destroyed = true;
@@ -500,7 +527,7 @@ function BunkerSection(x, y){
 		this.height = 0;
 		this.x = 0;
 		this.y = 0;
-	}
+	};
 }
 
 
@@ -604,8 +631,8 @@ function Cannon(x, y){
 
 	this.moveRight=function(){
 		this.x += 5;
-		if (this.x > 400){
-			this.x = 380;
+		if ((this.x + cannon.width) > canvas.width){
+			this.x = canvas.width - cannon.width;
 		}
 	};
 
@@ -615,8 +642,6 @@ function Cannon(x, y){
 
 	this.kill=function(){
 		this.alive = true;
-		// context.fillStyle="black";
-		// context.fillRect(this.x,this.y,this.width, this.height);
 		context.drawImage(cannon_death, this.x, this.y);
 	};
 
@@ -709,6 +734,28 @@ function Projectile(x, y){
 					}
 				}
 				
+			}
+
+
+			for(var k = 0; k < bunkers.length; k++){
+				for(var j = 0; j < bunkers[k].numSections; j++){
+
+
+					if(!bunkers[k].sections[j].destroyed){
+						if(testHit(bunkers[k].sections[j], this)){
+								bunkers[k].sections[j].height -= this.height;
+
+								bunkers[k].sections[j].lives--;
+								bunkers[k].sections[j].timesHitBottom++;
+
+						 		if(bunkers[k].sections[j].lives == 0){
+									bunkers[k].sections[j].destroy();
+								}
+								this.active = false;
+					 	}
+							
+					}
+				}
 			}
 		}	
 	};

@@ -1,4 +1,8 @@
 div.content {
 	margin: auto;
-	width: 450px;
+	width: 390px;
+}
+
+header {
+	text-align: center;
 }

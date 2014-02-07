@@ -3,6 +3,12 @@ div.content {
 	width: 390px;
 }
 
+div.side {
+	margin:auto;
+	width: 500px;
+	background-color: orange;
+}
+
 header {
 	text-align: center;
 	padding: 10px;

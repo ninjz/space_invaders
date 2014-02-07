@@ -17,9 +17,10 @@ var score;
 var level;
 
 var leftMark, rightMark;	// objects used as reference for when alien array should switch dirs
-var moveState = 0; // 0: right, 1: left, 2: down
+var moveState; // 0: right, 1: left, 2: down
 
 var gameOverState = false;
+var gameStarted = false;
 
 
 
@@ -87,18 +88,34 @@ function handleInput(e) {
 
 	// space
 	if(e.keyCode == 32){
-		player.shoot();
+		if(!gameStarted){
+			gameStarted = true;
+			newGame();
+		} else {
+			// clearInterval(interval);
+			// clearInterval(frameInterval);
+			// newGame();
+			player.shoot();
+		}
+		
 	}
 
 	// tab
 	if(e.keyCode == 9){
-		newGame();
+		// if(!gameStarted){
+		// 	gameStarted = true;
+		// 	newGame();
+		// } else {
+		// 	clearInterval(interval);
+		// 	clearInterval(frameInterval);
+		// 	newGame();
+		// }
 		
 	}
 }
 
 
-
+var invaderPop;
 function loadAssets(){
 	var i;
 	var alien1X = 63;
@@ -139,16 +156,18 @@ function loadAssets(){
 		alien3Array_1.push(new Invader(alien3, alien3X_1 += 30, alien3Y_1));
 	}
 	
+	invaderPop = (alien1Array.length + alien2Array_1.length + alien2Array.length + alien3Array.length + alien3Array_1.length);
+
 	leftMark = new Marker(50, alien1Y);
 	rightMark = new Marker(alien3X + 50, alien1Y);
 
 
 	player = new Cannon(canvas.width/2 - cannon.width/2, 440);
-
-	bunkers[0] = new Bunker(canvas.width/2 - 20, 390);
-	bunkers[1] = new Bunker(canvas.width/2 - 120, 390);
-	bunkers[2] = new Bunker(canvas.width/2 + 80, 390);
-
+	if(bunkers.length != 3){
+		bunkers[0] = new Bunker(canvas.width/2 - 20, 390);
+		bunkers[1] = new Bunker(canvas.width/2 - 120, 390);
+		bunkers[2] = new Bunker(canvas.width/2 + 80, 390);
+	}
 }
 
 
@@ -164,7 +183,7 @@ function draw(){
 
 	// HUD
 	var lifeX = 310;
-	context.font="15px Georgia";
+	context.font="15px monospace";
 	context.fillStyle="white";
 	context.fillText("LIVES",250,485);	
 	context.fillText("SCORE:", 28,485);
@@ -176,9 +195,7 @@ function draw(){
 
 	// ********************************************************************
 
-	// leftMark.draw();
-	// rightMark.draw();
-
+	
 	for(i = 0; i < bunkers.length; i++){
 		bunkers[i].draw();
 	}
@@ -190,6 +207,8 @@ function draw(){
 			bunkers[i].sections[j].draw();
 		}
 	}
+
+	
 
 	for(i = 0; i < projectiles.length; i++){
 		projectiles[i].draw();
@@ -248,10 +267,10 @@ function displayMenu(){
 
 	context.drawImage(logo, 85, 80);
 
-	context.font="20px Georgia";
+	context.font="13px monospace";
 	context.fillStyle="white";
 
-	context.fillText("Press [TAB] to start!",110,300);
+	context.fillText("Press [SPACE] to start!",110,300);
 	window.addEventListener('keydown', handleInput, true);
 
 }
@@ -386,6 +405,30 @@ function tick(){
 			lastY = rightMark.y;
 		}
 	}
+
+	if((leftMark.y >= (canvas.height/4)) && speedIncrease == 0){
+		invaderSpeed += 0.1;
+		speedIncrease++;
+	}
+
+	if((leftMark.y >= (canvas.height/2)) && speedIncrease == 1){
+		invaderSpeed += 0.1;
+		speedIncrease++;
+	}
+
+	if(leftMark.y >= ((canvas.height*2)/3)){
+		clearInterval(frameInterval);
+		clearInterval(interval);
+		gameOverState = true;
+	}
+
+	if(invaderPop == 0){
+		clearInterval(frameInterval);
+		clearInterval(interval);
+		nextLevel();
+	}
+
+
 		
 
 	for(i = 0; i < bombs.length; i++){
@@ -441,15 +484,21 @@ function tick(){
 
 var decisionTime;
 var time;
+var invaderSpeed;
+var speedIncrease;
+
 function newGame(){
 	gameOverState = false;
 	player.alive = true;
+
+	speedIncrease = 0;
+	invaderSpeed = 0.2;
+	moveState = 0;
 	lives = 3;
 	level = 0;
 	score = 0;
 	time = 0;
-	decisionTime = 30;
-	var i;
+	decisionTime = 50;
 
 	// empty these arrays
 	projectiles.length = 0;
@@ -468,10 +517,38 @@ function newGame(){
 	interval = setInterval(tick, 20);
 }
 
+function nextLevel(){
+	time = 0;
+	decisionTime -= 1;
+	invaderSpeed += 0.1;
+	moveState = 0;
+	speedIncrease = 0;
+
+	if(decisionTime == 0){
+		decisionTime = 0;
+	}
+
+	// empty these arrays
+	projectiles.length = 0;
+	bombs.length = 0;
+
+	alien1Array.length = 0;
+	alien2Array.length = 0;
+	alien2Array_1.length = 0;
+	alien3Array.length = 0;
+	alien3Array_1.length = 0;
+
+	loadAssets();
+
+	frameInterval = setInterval(setFrame, 400);
+	interval = setInterval(tick, 20);
+
+}
+
 function gameOver(){
 
-	context.font="20px Georgia";
-	context.fillStyle="green";
+	context.font="23px monospace";
+	context.fillStyle="white";
 
 	context.fillText("GAME OVER",130,250);
 
@@ -571,8 +648,7 @@ function BunkerSection(x, y, lives){
 // ************************************************************************ 
 // Invader Class Object
 // *********************************************************************** 
-var invaderSpeed = 0.2;
-var invaderPop = 0;
+
 
 function Invader(type, x, y){
 	this.constructor.population++;
@@ -596,7 +672,6 @@ function Invader(type, x, y){
 	};
 
 	this.draw=function(){
-		// context.drawImage(this.type, this.x, this.y);
 		if(this.alive){
 			switch(this.type)
 			{
@@ -633,6 +708,7 @@ function Invader(type, x, y){
 		context.fillStyle="black";
 		context.fillRect(this.x,this.y,this.width,this.height);
 		context.drawImage(death, this.x - 3, this.y);
+		invaderPop--;
 
 	};
 

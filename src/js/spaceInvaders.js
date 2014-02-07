@@ -15,11 +15,34 @@ var switchFrame = false;
 var lives;
 var score;
 var level;
+
+var leftMark, rightMark;	// objects used as reference for when alien array should switch dirs
 var moveState = 0; // 0: right, 1: left, 2: down
 
 var gameOverState = false;
 
 
+
+function Marker(x,y){
+	this.x = x;
+	this.y = y;
+
+	this.moveLeft = function(){
+		this.x -= invaderSpeed;
+	};
+
+	this.moveRight = function(){
+		this.x += invaderSpeed;
+	};
+
+	this.moveDown = function(){
+		this.y += invaderSpeed;
+	};
+
+	// this.draw = function(){
+	// 	context.drawImage(cannon, this.x, this.y);
+	// };
+}
 
 // ************************************************************************ 
 // INIT
@@ -116,6 +139,9 @@ function loadAssets(){
 		alien3Array_1.push(new Invader(alien3, alien3X_1 += 30, alien3Y_1));
 	}
 	
+	leftMark = new Marker(50, alien1Y);
+	rightMark = new Marker(alien3X + 50, alien1Y);
+
 
 	player = new Cannon(canvas.width/2 - cannon.width/2, 440);
 
@@ -150,7 +176,8 @@ function draw(){
 
 	// ********************************************************************
 
-	
+	// leftMark.draw();
+	// rightMark.draw();
 
 	for(i = 0; i < bunkers.length; i++){
 		bunkers[i].draw();
@@ -203,12 +230,6 @@ function draw(){
 
 	
 
-	
-
-	
-
-	
-
 	if(gameOverState){
 		clearInterval(interval);
 		clearInterval(frameInterval);
@@ -236,8 +257,7 @@ function displayMenu(){
 }
 
 
-var decisionTime = 30;
-var time = 0;
+var lastY, prevState;
 
 function tick(){
 	var a1len, a2len, a3len;
@@ -279,64 +299,94 @@ function tick(){
 	// Alien array movement
 	
 	var i,j;
-	switch(moveState){
-		case 0:
 
-			for(i = 0; i < alien1Array.length; i++){
+	// move right
+	if(moveState == 0){
+		for(i = 0; i < alien1Array.length; i++){
 				alien1Array[i].moveRight();
 			}
-			for(i = 0; i < alien2Array.length; i++){
-				alien2Array[i].moveRight();
-			}
-			for(i = 0; i < alien3Array.length; i++){
-				alien3Array[i].moveRight();
-			}
-			for(i = 0; i < alien2Array_1.length; i++){
-				alien2Array_1[i].moveRight();
-			}
-			for(i = 0; i < alien3Array_1.length; i++){
-				alien3Array_1[i].moveRight();
-			}
-			break;
-		case 1:
+		for(i = 0; i < alien2Array.length; i++){
+			alien2Array[i].moveRight();
+		}
+		for(i = 0; i < alien3Array.length; i++){
+			alien3Array[i].moveRight();
+		}
+		for(i = 0; i < alien2Array_1.length; i++){
+			alien2Array_1[i].moveRight();
+		}
+		for(i = 0; i < alien3Array_1.length; i++){
+			alien3Array_1[i].moveRight();
+		}
 
-			for(i = 0; i < alien1Array.length; i++){
-				alien1Array[i].moveLeft();
-			}
-			for(i = 0; i < alien2Array.length; i++){
-				alien2Array[i].moveLeft();
-			}
-			for(i = 0; i < alien3Array.length; i++){
-				alien3Array[i].moveLeft();
-			}
-			for(i = 0; i < alien2Array_1.length; i++){
-				alien2Array_1[i].moveLeft();
-			}
-			for(i = 0; i < alien3Array_1.length; i++){
-				alien3Array_1[i].moveLeft();
-			}
-			break;
-		case 2:
+		leftMark.moveRight();
+		rightMark.moveRight();
 
-			for(i = 0; i < alien1Array.length; i++){
-				alien1Array[i].moveDown();
-			}
-			for(i = 0; i < alien2Array.length; i++){
-				alien2Array[i].moveDown();
-			}
-			for(i = 0; i < alien3Array.length; i++){
-				alien3Array[i].moveDown();
-			}
-			for(i = 0; i < alien2Array_1.length; i++){
-				alien2Array_1[i].moveDown();
-			}
-			for(i = 0; i < alien3Array_1.length; i++){
-				alien3Array_1[i].moveDown();
-			}
-			break;
-
+		if(rightMark.x >= canvas.width ){
+			moveState = 2;
+			prevState = 0;
+			lastY = rightMark.y;
+		}
 	}
 
+	// move down
+	else if(moveState == 2){
+
+		for(i = 0; i < alien1Array.length; i++){
+			alien1Array[i].moveDown();
+		}
+		for(i = 0; i < alien2Array.length; i++){
+			alien2Array[i].moveDown();
+		}
+		for(i = 0; i < alien3Array.length; i++){
+			alien3Array[i].moveDown();
+		}
+		for(i = 0; i < alien2Array_1.length; i++){
+			alien2Array_1[i].moveDown();
+		}
+		for(i = 0; i < alien3Array_1.length; i++){
+			alien3Array_1[i].moveDown();
+		}
+		leftMark.moveDown();
+		rightMark.moveDown();
+
+		if( (rightMark.y - lastY) >= 20){
+			if(prevState == 0){
+				moveState = 1;
+			} else {
+				moveState = 0;
+			}
+			
+
+		}
+	}
+
+	// move left
+	else if (moveState == 1) {
+		for(i = 0; i < alien1Array.length; i++){
+			alien1Array[i].moveLeft();
+		}
+		for(i = 0; i < alien2Array.length; i++){
+			alien2Array[i].moveLeft();
+		}
+		for(i = 0; i < alien3Array.length; i++){
+			alien3Array[i].moveLeft();
+		}
+		for(i = 0; i < alien2Array_1.length; i++){
+			alien2Array_1[i].moveLeft();
+		}
+		for(i = 0; i < alien3Array_1.length; i++){
+			alien3Array_1[i].moveLeft();
+		}
+		leftMark.moveLeft();
+		rightMark.moveLeft();
+
+		if(leftMark.x <= 0){
+			moveState = 2;
+			prevState = 1;
+			lastY = rightMark.y;
+		}
+	}
+		
 
 	for(i = 0; i < bombs.length; i++){
 		if(testHit(player, bombs[i])){
@@ -389,12 +439,16 @@ function tick(){
 	
 }
 
+var decisionTime;
+var time;
 function newGame(){
 	gameOverState = false;
 	player.alive = true;
 	lives = 3;
 	level = 0;
 	score = 0;
+	time = 0;
+	decisionTime = 30;
 	var i;
 
 	// empty these arrays
@@ -423,26 +477,9 @@ function gameOver(){
 
 }
 
-var startX = 0;
+
 function setFrame(){
 	switchFrame = !switchFrame;
-	// move aliens
-	startX++;
-	if(startX >= 20){
-		moveState = 2;
-	}
-	if(startX >= 23){
-		moveState = 1;
-	}
-	if(startX >= 43){
-		moveState = 2;
-	}
-
-	if(startX >= 46){
-		moveState = 0;
-		startX = 0;
-	}
-
 }
 
 // ************************************************************************ 

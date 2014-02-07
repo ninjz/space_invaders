@@ -5,4 +5,19 @@ div.content {
 
 header {
 	text-align: center;
+	padding: 10px;
+}
+
+canvas { 
+	border: 3px solid grey; 
+}
+
+body{
+	background-color: green;
+}
+
+footer{
+	color: white;
+	font-family: monospace;
+	text-align: center;
 }
